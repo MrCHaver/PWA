@@ -75,6 +75,8 @@ public class TrieDisplay_minimal extends JPanel implements KeyListener {
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
 
+		// NOTE: a lot of these hardcoded values work relative to one another
+		//       change with caution and ensure they work together
         g.setFont(new Font("Consolas", Font.PLAIN, 18));
 
         int x = 30;
@@ -134,21 +136,15 @@ public class TrieDisplay_minimal extends JPanel implements KeyListener {
         // Backspace is handled in keyPressed (more reliable)
         if (c == '\b') return;
 
-        // Enter -> treat like a space
-        if (c == '\n' || c == '\r') {
+        // Allow space OR treat enter / return like a space
+        if (c == ' ' || c == '\n' || c == '\r') {
             typed.append(' ');
             updatePredictions();
             return;
         }
 
-        // Allow space
-        if (c == ' ') {
-            typed.append(' ');
-            updatePredictions();
-            return;
-        }
-
-        // Allow any non-control character (prefix logic strips to letters anyway)
+        // Allow any non-control character
+        // (things that are not like tabs, return, etc..)
         if (!Character.isISOControl(c)) {
             typed.append(c);
             updatePredictions();
@@ -168,24 +164,15 @@ public class TrieDisplay_minimal extends JPanel implements KeyListener {
 
     @Override
     public void keyReleased(KeyEvent e) {
-        // not used
+        // not used (included to complete interface)
     }
 
-    // ---- Main ---------------------------------------------------------------
+    /*********  Main *********************/
 
     public static void main(String[] args) {
         Trie trie = new Trie();
-
-        // Optional: train from file passed in args[0]
-        if (args.length > 0) {
-            String filename = args[0];
-            int inserted = loadWordsIntoTrie(trie, filename);
-            System.out.println("Loaded " + inserted + " words from: " + filename);
-        } else {
-            System.out.println("No training file provided.");
-            loadWordsIntoTrie(trie,"PrideAndPrejudice.txt");
-            System.out.println("Loaded Pride and Prejudice");
-        }
+        int numWords = loadWordsIntoTrie(trie,"PrideAndPrejudice.txt");
+        System.out.println("Loaded "+String.format("%,d", numWords)+" words from Pride and Prejudice");
 
         JFrame frame = new JFrame("TrieDisplay (Minimal)");
         TrieDisplay_minimal panel = new TrieDisplay_minimal(trie);
@@ -204,8 +191,7 @@ public class TrieDisplay_minimal extends JPanel implements KeyListener {
        int count = 0;
 
        try (BufferedReader br = new BufferedReader(new FileReader(filename))) {
-           String line;
-
+           String line = "";
            while ((line = br.readLine()) != null) {
 
                // Normalize line: lowercase, letters only, spaces preserved
