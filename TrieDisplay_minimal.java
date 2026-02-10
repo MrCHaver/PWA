@@ -182,8 +182,9 @@ public class TrieDisplay_minimal extends JPanel implements KeyListener {
             int inserted = loadWordsIntoTrie(trie, filename);
             System.out.println("Loaded " + inserted + " words from: " + filename);
         } else {
-            System.out.println("No training file provided. (Run: java TrieDisplay_minimal words.txt)");
+            System.out.println("No training file provided.");
             loadWordsIntoTrie(trie,"PrideAndPrejudice.txt");
+            System.out.println("Loaded Pride and Prejudice");
         }
 
         JFrame frame = new JFrame("TrieDisplay (Minimal)");
@@ -199,21 +200,33 @@ public class TrieDisplay_minimal extends JPanel implements KeyListener {
         SwingUtilities.invokeLater(panel::requestFocusInWindow);
     }
 
-    private static int loadWordsIntoTrie(Trie trie, String filename) {
-        int count = 0;
-        try (Scanner sc = new Scanner(new File(filename))) {
-            while (sc.hasNext()) {
-                String w = sc.next();
-                // Normalize: letters only, lowercase
-                w = w.replaceAll("[^A-Za-z]", "").toLowerCase();
-                if (!w.isEmpty()) {
-                    trie.insert(w);
-                    count++;
-                }
-            }
-        } catch (FileNotFoundException e) {
-            System.out.println("Could not find file: " + filename);
-        }
-        return count;
-    }
+   private static int loadWordsIntoTrie(Trie trie, String filename) {
+       int count = 0;
+
+       try (BufferedReader br = new BufferedReader(new FileReader(filename))) {
+           String line;
+
+           while ((line = br.readLine()) != null) {
+
+               // Normalize line: lowercase, letters only, spaces preserved
+               line = line.replaceAll("[^A-Za-z]", " ").toLowerCase();
+
+               // Split into words
+               String[] words = line.split("\\s+");
+
+               for (String w : words) {
+                   if (!w.isEmpty()) {
+                       trie.insert(w);
+                       count++;
+                   }
+               }
+           }
+
+       } catch (IOException e) {
+           System.out.println("Could not read file: " + filename);
+       }
+
+       return count;
+   }
+
 }

@@ -46,11 +46,39 @@ class Trie {
                 current.children.put(l, child);
             }
             current = child;
-            current.incrementPassCount();
+            current.passCount++;
         }
 
-        current.incrementEndCount();
+        current.endCount++;
     }
+
+
+public String mostLikelyNextWord(String prefix) {
+    if (prefix == null) return "";
+
+    TrieNode current = root;
+
+    // walk to the node for prefix (same logic as contains/getWordSet)
+    for (char ch : prefix.toCharArray()) {
+        TrieNode nxt = current.getChildren().get(ch);
+        if (nxt == null) return "";
+        current = nxt;
+    }
+
+    // If the prefix itself is a complete word and has no children,
+    // it's the best (and only) completion.
+    if (current.isEndOfWord() && current.getChildren().isEmpty()) {
+        return prefix;
+    }
+
+    // Use your existing collector/ranking
+    TreeSet<WordNum> set = getWordSet(prefix);
+    if (set == null || set.isEmpty()) return "";
+
+    // top-ranked item in TreeSet (according to compareTo)
+    WordNum best = set.first();
+    return best.word;   // works because WordNum is an inner class of Trie
+}
 
     public TreeSet<LetterNum> mostFreqKids(String pre) {
         TrieNode current = root;
