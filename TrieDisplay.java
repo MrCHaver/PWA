@@ -79,6 +79,19 @@ public class TrieDisplay extends JPanel implements KeyListener {
     g2.setFont(new Font("Courier New", Font.BOLD, 24));
 
     g2.setColor(Color.YELLOW);
+
+    if (word.length() > 0) {
+      java.util.List<String> topLetters = trie.topNextLettersWithPercent(word, 5);
+      java.util.List<String> randomLetters = trie.randomNextLettersWithPercent(word, 5);
+      java.util.List<String> topWords = trie.topNextWordsWithPercent(word, 5);
+      java.util.List<String> randomWords = trie.randomNextWordsWithPercent(word, 5);
+
+      g2.drawString("Top next letters -> " + String.join(", ", topLetters), 40, 320);
+      g2.drawString("Random letters -> " + String.join(", ", randomLetters), 40, 360);
+      g2.drawString("Top next words -> " + String.join(", ", topWords), 40, 400);
+      g2.drawString("Random words -> " + String.join(", ", randomWords), 40, 440);
+    } else {
+      g2.drawString("Type letters to view next-letter and next-word likelihoods.", 40, 320);
     g2.drawString("Likely next char -> " + trie.mostLikelyNextChar(word), 40, 320);
 
     if (word.length() > 0) {
