@@ -127,6 +127,33 @@ public class Trie2 {
         return node.bestWord;
     }
 
+
+    // Returns top K likely next letters for a prefix, formatted as "x (12.3%)".
+    public List<String> topNextLettersWithPercent(String prefix, int k) {
+        ArrayList<ScoredOption> options = getNextLetterOptions(prefix);
+        return formatTopOptions(options, k);
+    }
+
+    // Returns random next-letter options (excluding the strongest predictions when possible),
+    // formatted as "x (12.3%)".
+    public List<String> randomNextLettersWithPercent(String prefix, int k) {
+        ArrayList<ScoredOption> options = getNextLetterOptions(prefix);
+        return formatRandomOptions(options, k);
+    }
+
+    // Returns top K likely next words for a prefix, formatted as "word (12.3%)".
+    public List<String> topNextWordsWithPercent(String prefix, int k) {
+        ArrayList<ScoredOption> options = getNextWordOptions(prefix);
+        return formatTopOptions(options, k);
+    }
+
+    // Returns random next-word options (excluding the strongest predictions when possible),
+    // formatted as "word (12.3%)".
+    public List<String> randomNextWordsWithPercent(String prefix, int k) {
+        ArrayList<ScoredOption> options = getNextWordOptions(prefix);
+        return formatRandomOptions(options, k);
+    }
+
     public void printWordFrequencies() {
         TreeSet<WordFreq> set = new TreeSet<>();
         collectWords(root, new StringBuilder(), set);
@@ -360,6 +387,96 @@ public class Trie2 {
         }
     }
 
+    private ArrayList<ScoredOption> getNextLetterOptions(String prefix) {
+        ArrayList<ScoredOption> out = new ArrayList<>();
+        if (prefix == null || prefix.length() == 0)
+            return out;
+
+        Node node = getNode(prefix);
+        if (node == null || node.children.isEmpty())
+            return out;
+
+        long total = 0;
+        for (Node child : node.children.values()) total += child.passCount;
+        if (total <= 0)
+            return out;
+
+        for (Map.Entry<Character, Node> e : node.children.entrySet()) {
+            double percent = (e.getValue().passCount * 100.0) / total;
+            out.add(new ScoredOption(String.valueOf(e.getKey()), percent));
+        }
+
+        Collections.sort(out);
+        return out;
+    }
+
+    private ArrayList<ScoredOption> getNextWordOptions(String prefix) {
+        ArrayList<ScoredOption> out = new ArrayList<>();
+        if (prefix == null || prefix.length() == 0)
+            return out;
+
+        Node node = getNode(prefix);
+        if (node == null)
+            return out;
+
+        ArrayList<WordFreq> words = new ArrayList<>();
+        collectWordCounts(node, new StringBuilder(prefix), words);
+
+        long total = 0;
+        for (WordFreq wf : words) total += wf.freq;
+        if (total <= 0)
+            return out;
+
+        for (WordFreq wf : words) {
+            double percent = (wf.freq * 100.0) / total;
+            out.add(new ScoredOption(wf.word, percent));
+        }
+
+        Collections.sort(out);
+        return out;
+    }
+
+    private void collectWordCounts(Node curr, StringBuilder path, ArrayList<WordFreq> out) {
+        if (curr.endCount > 0) {
+            out.add(new WordFreq(path.toString(), curr.endCount));
+        }
+
+        for (Map.Entry<Character, Node> entry : curr.children.entrySet()) {
+            path.append(entry.getKey());
+            collectWordCounts(entry.getValue(), path, out);
+            path.deleteCharAt(path.length() - 1);
+        }
+    }
+
+    private List<String> formatTopOptions(ArrayList<ScoredOption> options, int k) {
+        ArrayList<String> out = new ArrayList<>();
+        if (k <= 0)
+            return out;
+
+        int limit = Math.min(k, options.size());
+        for (int i = 0; i < limit; i++) out.add(options.get(i).toDisplay());
+        return out;
+    }
+
+    private List<String> formatRandomOptions(ArrayList<ScoredOption> options, int k) {
+        ArrayList<String> out = new ArrayList<>();
+        if (k <= 0 || options.isEmpty())
+            return out;
+
+        ArrayList<ScoredOption> pool = new ArrayList<>();
+        int skipTop = Math.min(5, options.size());
+        if (options.size() > skipTop) {
+            for (int i = skipTop; i < options.size(); i++) pool.add(options.get(i));
+        } else {
+            pool.addAll(options);
+        }
+
+        Collections.shuffle(pool);
+        int limit = Math.min(k, pool.size());
+        for (int i = 0; i < limit; i++) out.add(pool.get(i).toDisplay());
+        return out;
+    }
+
     /* =========================
        Traversal Helpers
        ========================= */
@@ -553,6 +670,28 @@ public class Trie2 {
             path.append(entry.getKey());
             dfsMostLikelyWord(entry.getValue(), path, best);
             path.deleteCharAt(path.length() - 1);
+        }
+    }
+
+    private static class ScoredOption implements Comparable<ScoredOption> {
+        String text;
+        double percent;
+
+        ScoredOption(String text, double percent) {
+            this.text = text;
+            this.percent = percent;
+        }
+
+        String toDisplay() {
+            return text + " (" + String.format(Locale.US, "%.1f", percent) + "%)";
+        }
+
+        @Override
+        public int compareTo(ScoredOption other) {
+            int pctCmp = Double.compare(other.percent, this.percent);
+            if (pctCmp != 0)
+                return pctCmp;
+            return this.text.compareTo(other.text);
         }
     }
 
