@@ -6,12 +6,21 @@ import java.util.*;
 
 public class TrieDisplay extends JPanel implements KeyListener {
   private JFrame frame;
-  private int width = 1400, height = 600;
+  private int width = 1400, height = 700;
   private Trie2 trie;
   private String word;
   private char likelyChar;
   private boolean wordsLoaded;
   private ArrayList<TypedWord> wordList;
+
+  // Regency-inspired palette
+  private static final Color PAPER = new Color(245, 235, 215);
+  private static final Color INK = new Color(60, 47, 47);
+  private static final Color BORDER = new Color(110, 78, 46);
+  private static final Color ACCENT = new Color(176, 141, 87);
+  private static final Color VALID = new Color(62, 92, 74);
+  private static final Color INVALID = new Color(122, 62, 72);
+  private static final Color SOFT_INK = new Color(92, 71, 71);
 
   private static class TypedWord {
     String txt;
@@ -25,7 +34,7 @@ public class TrieDisplay extends JPanel implements KeyListener {
 
   public TrieDisplay() {
 
-    frame = new JFrame("Trie Next");
+    frame = new JFrame("Pride & Prejudice Predictive Writer");
     frame.setSize(width, height);
     frame.add(this);
     frame.addKeyListener(this);
@@ -50,35 +59,51 @@ public class TrieDisplay extends JPanel implements KeyListener {
   public void paintComponent(Graphics g) {
     super.paintComponent(g);
     Graphics2D g2 = (Graphics2D) g;
-    g2.setColor(Color.BLACK);
+
+    // Page background
+    g2.setColor(PAPER);
     g2.fillRect(0, 0, frame.getWidth(), frame.getHeight());
 
-    g2.setFont(new Font("Courier New", Font.BOLD, 30));
-    g2.setColor(Color.WHITE);
+    // Decorative inner border
+    g2.setColor(BORDER);
+    g2.drawRect(20, 20, frame.getWidth() - 60, frame.getHeight() - 80);
+    g2.drawRect(24, 24, frame.getWidth() - 68, frame.getHeight() - 88);
+
+    // Header
+    g2.setFont(new Font("Serif", Font.BOLD, 34));
+    g2.setColor(INK);
+    g2.drawString("Pride & Prejudice Writing Desk", 40, 80);
+
+    g2.setFont(new Font("Serif", Font.PLAIN, 24));
+    g2.setColor(SOFT_INK);
     if (wordsLoaded)
-      g2.drawString("Start Typing:", 40, 100);
+      g2.drawString("Compose your letter:", 40, 130);
     else
-      g2.drawString("Loading... please wait", 40, 100);
+      g2.drawString("Preparing the manuscript...", 40, 130);
 
     int leftPoint = 40, charWidth = 18;
+    g2.setFont(new Font("Serif", Font.PLAIN, 30));
     for (TypedWord w : wordList) {
       g2.setColor(w.col);
-      g2.drawString(w.txt, leftPoint, 200);
+      g2.drawString(w.txt, leftPoint, 210);
       leftPoint += (w.txt.length() * charWidth) + charWidth;
     }
 
-    g2.setFont(new Font("Courier New", Font.BOLD, 32));
     if (trie.contains(word))
-      g2.setColor(Color.GREEN);
+      g2.setColor(VALID);
     else if (likelyChar == '_')
-      g2.setColor(Color.RED);
+      g2.setColor(INVALID);
     else
-      g2.setColor(Color.WHITE);
+      g2.setColor(INK);
 
-    g2.drawString(word, leftPoint, 200);
-    g2.setFont(new Font("Courier New", Font.BOLD, 24));
+    g2.setFont(new Font("Serif", Font.BOLD, 34));
+    g2.drawString(word, leftPoint, 210);
 
-    g2.setColor(Color.YELLOW);
+    g2.setColor(ACCENT);
+    g2.drawLine(40, 240, frame.getWidth() - 80, 240);
+
+    g2.setFont(new Font("Serif", Font.PLAIN, 24));
+    g2.setColor(INK);
 
     if (word.length() > 0) {
       java.util.List<String> topLetters = trie.topNextLettersWithPercent(word, 5);
@@ -86,12 +111,16 @@ public class TrieDisplay extends JPanel implements KeyListener {
       java.util.List<String> topWords = trie.topNextWordsWithPercent(word, 5);
       java.util.List<String> randomWords = trie.randomNextWordsWithPercent(word, 5);
 
-      g2.drawString("Top next letters -> " + String.join(", ", topLetters), 40, 320);
-      g2.drawString("Random letters -> " + String.join(", ", randomLetters), 40, 360);
-      g2.drawString("Top next words -> " + String.join(", ", topWords), 40, 400);
-      g2.drawString("Random words -> " + String.join(", ", randomWords), 40, 440);
+      g2.drawString("Most probable next letters -> " + String.join(", ", topLetters), 40, 310);
+      g2.drawString("Alternative letters -> " + String.join(", ", randomLetters), 40, 360);
+      g2.drawString("Most probable continuations -> " + String.join(", ", topWords), 40, 410);
+      g2.drawString("Alternative turns of phrase -> " + String.join(", ", randomWords), 40, 460);
+      g2.setColor(SOFT_INK);
+      g2.drawString("Percentages are based on patterns observed in Pride and Prejudice.", 40, 520);
     } else {
-      g2.drawString("Type letters to view next-letter and next-word likelihoods.", 40, 320);
+      g2.drawString("Begin a word to view likely next letters and likely next words.", 40, 310);
+      g2.setColor(SOFT_INK);
+      g2.drawString("Tip: Space commits a word. Backspace edits the current draft.", 40, 360);
     }
   }
 
@@ -99,9 +128,9 @@ public class TrieDisplay extends JPanel implements KeyListener {
     int keyCode = e.getKeyCode();
     if (keyCode == KeyEvent.VK_SPACE) {
       if (trie.contains(word))
-        wordList.add(new TypedWord(word, Color.GREEN));
+        wordList.add(new TypedWord(word, VALID));
       else
-        wordList.add(new TypedWord(word, Color.RED));
+        wordList.add(new TypedWord(word, INVALID));
       word = "";
     }
     if (keyCode == KeyEvent.VK_BACK_SPACE) {
