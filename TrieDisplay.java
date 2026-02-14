@@ -92,6 +92,19 @@ public class TrieDisplay extends JPanel implements KeyListener {
       g2.drawString("Random words -> " + String.join(", ", randomWords), 40, 440);
     } else {
       g2.drawString("Type letters to view next-letter and next-word likelihoods.", 40, 320);
+    g2.drawString("Likely next char -> " + trie.mostLikelyNextChar(word), 40, 320);
+
+    if (word.length() > 0) {
+      g2.drawString("Likely next word -> " + trie.mostLikelyNextWord(word), 40, 360);
+
+      java.util.List<String> likelyWords = trie.topKWords(word, 5);
+      g2.drawString("Likely words -> " + String.join(", ", likelyWords), 40, 400);
+
+      java.util.List<String> randomWords = trie.topKWords(word, 20);
+      Collections.shuffle(randomWords);
+      if (randomWords.size() > 5)
+        randomWords = randomWords.subList(0, 5);
+      g2.drawString("Other options -> " + String.join(", ", randomWords), 40, 440);
     }
   }
 
