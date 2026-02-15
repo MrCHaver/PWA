@@ -41,6 +41,7 @@ public class TrieDisplay extends JPanel implements KeyListener {
     frame.setResizable(false);
     frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
     frame.setVisible(true);
+    frame.setFocusTraversalKeysEnabled(false);
 
     // Default Settings
     word = "";
@@ -81,12 +82,18 @@ public class TrieDisplay extends JPanel implements KeyListener {
     else
       g2.drawString("Preparing the manuscript...", 40, 130);
 
-    int leftPoint = 40, charWidth = 18;
+    int leftPoint = 40;
+    final int wordBaseline = 210;
+    final int minGap = 12;
+
     g2.setFont(new Font("Serif", Font.PLAIN, 30));
+    FontMetrics bodyMetrics = g2.getFontMetrics();
+    int naturalGap = Math.max(minGap, bodyMetrics.charWidth(' '));
+
     for (TypedWord w : wordList) {
       g2.setColor(w.col);
-      g2.drawString(w.txt, leftPoint, 210);
-      leftPoint += (w.txt.length() * charWidth) + charWidth;
+      g2.drawString(w.txt, leftPoint, wordBaseline);
+      leftPoint += bodyMetrics.stringWidth(w.txt) + naturalGap;
     }
 
     if (trie.contains(word))
@@ -97,7 +104,7 @@ public class TrieDisplay extends JPanel implements KeyListener {
       g2.setColor(INK);
 
     g2.setFont(new Font("Serif", Font.BOLD, 34));
-    g2.drawString(word, leftPoint, 210);
+    g2.drawString(word, leftPoint, wordBaseline);
 
     g2.setColor(ACCENT);
     g2.drawLine(40, 240, frame.getWidth() - 80, 240);
@@ -120,7 +127,7 @@ public class TrieDisplay extends JPanel implements KeyListener {
     } else {
       g2.drawString("Begin a word to view likely next letters and likely next words.", 40, 310);
       g2.setColor(SOFT_INK);
-      g2.drawString("Tip: Space commits a word. Backspace edits the current draft.", 40, 360);
+      g2.drawString("Tip: Space commits a word. TAB autocompletes. Backspace edits.", 40, 360);
     }
   }
 
@@ -138,6 +145,14 @@ public class TrieDisplay extends JPanel implements KeyListener {
         word = word.substring(0, word.length() - 1);
       else if (!wordList.isEmpty())
         word = wordList.remove(wordList.size() - 1).txt;
+    }
+    if (keyCode == KeyEvent.VK_TAB) {
+      if (!word.isEmpty()) {
+        String completion = trie.mostLikelyNextWord(word);
+        if (completion != null && completion.startsWith(word))
+          word = completion;
+      }
+      e.consume();
     }
     if (keyCode >= KeyEvent.VK_A && keyCode <= KeyEvent.VK_Z)
       word += KeyEvent.getKeyText(keyCode).toLowerCase();
