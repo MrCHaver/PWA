@@ -463,13 +463,13 @@ public class Trie2 {
         if (k <= 0 || options.isEmpty())
             return out;
 
-        ArrayList<ScoredOption> pool = new ArrayList<>();
+        // Alternatives must be different from the top 5 most probable options.
         int skipTop = Math.min(5, options.size());
-        if (options.size() > skipTop) {
-            for (int i = skipTop; i < options.size(); i++) pool.add(options.get(i));
-        } else {
-            pool.addAll(options);
-        }
+        if (options.size() <= skipTop)
+            return out;
+
+        ArrayList<ScoredOption> pool = new ArrayList<>();
+        for (int i = skipTop; i < options.size(); i++) pool.add(options.get(i));
 
         Collections.shuffle(pool);
         int limit = Math.min(k, pool.size());

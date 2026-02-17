@@ -82,18 +82,29 @@ public class TrieDisplay extends JPanel implements KeyListener {
     else
       g2.drawString("Preparing the manuscript...", 40, 130);
 
-    int leftPoint = 40;
-    final int wordBaseline = 210;
+    final int leftMargin = 40;
+    final int rightMargin = frame.getWidth() - 80;
+    final int firstLineY = 210;
     final int minGap = 12;
 
     g2.setFont(new Font("Serif", Font.PLAIN, 30));
     FontMetrics bodyMetrics = g2.getFontMetrics();
     int naturalGap = Math.max(minGap, bodyMetrics.charWidth(' '));
+    int lineHeight = bodyMetrics.getHeight() + 8;
+
+    int cursorX = leftMargin;
+    int cursorY = firstLineY;
 
     for (TypedWord w : wordList) {
+      int wordWidth = bodyMetrics.stringWidth(w.txt);
+      if (cursorX > leftMargin && cursorX + wordWidth > rightMargin) {
+        cursorX = leftMargin;
+        cursorY += lineHeight;
+      }
+
       g2.setColor(w.col);
-      g2.drawString(w.txt, leftPoint, wordBaseline);
-      leftPoint += bodyMetrics.stringWidth(w.txt) + naturalGap;
+      g2.drawString(w.txt, cursorX, cursorY);
+      cursorX += wordWidth + naturalGap;
     }
 
     if (trie.contains(word))
@@ -103,13 +114,21 @@ public class TrieDisplay extends JPanel implements KeyListener {
     else
       g2.setColor(INK);
 
-    g2.setFont(new Font("Serif", Font.BOLD, 34));
-    g2.drawString(word, leftPoint, wordBaseline);
+    int currentWordWidth = bodyMetrics.stringWidth(word);
+    if (cursorX > leftMargin && cursorX + currentWordWidth > rightMargin) {
+      cursorX = leftMargin;
+      cursorY += lineHeight;
+    }
+    g2.drawString(word, cursorX, cursorY);
 
+    int dividerY = cursorY + 28;
     g2.setColor(ACCENT);
-    g2.drawLine(40, 240, frame.getWidth() - 80, 240);
+    g2.drawLine(leftMargin, dividerY, rightMargin, dividerY);
 
-    g2.setFont(new Font("Serif", Font.PLAIN, 24));
+    int infoY = dividerY + 40;
+    int infoLineGap = 34;
+
+    g2.setFont(new Font("Serif", Font.PLAIN, 20));
     g2.setColor(INK);
 
     if (word.length() > 0) {
@@ -118,26 +137,41 @@ public class TrieDisplay extends JPanel implements KeyListener {
       java.util.List<String> topWords = trie.topNextWordsWithPercent(word, 5);
       java.util.List<String> randomWords = trie.randomNextWordsWithPercent(word, 5);
 
-      g2.drawString("Most probable next letters -> " + String.join(", ", topLetters), 40, 310);
-      g2.drawString("Alternative letters -> " + String.join(", ", randomLetters), 40, 360);
-      g2.drawString("Most probable continuations -> " + String.join(", ", topWords), 40, 410);
-      g2.drawString("Alternative turns of phrase -> " + String.join(", ", randomWords), 40, 460);
+      int y = infoY;
+      g2.drawString("Most probable next letters -> " + String.join(", ", topLetters), leftMargin, y);
+      y += infoLineGap;
+
+      if (!randomLetters.isEmpty()) {
+        g2.drawString("Alternative letters -> " + String.join(", ", randomLetters), leftMargin, y);
+        y += infoLineGap;
+      }
+
+      g2.drawString("Most probable continuations -> " + String.join(", ", topWords), leftMargin, y);
+      y += infoLineGap;
+
+      if (!randomWords.isEmpty()) {
+        g2.drawString("Alternative turns of phrase -> " + String.join(", ", randomWords), leftMargin, y);
+        y += infoLineGap;
+      }
+
       g2.setColor(SOFT_INK);
-      g2.drawString("Percentages are based on patterns observed in Pride and Prejudice.", 40, 520);
+      g2.drawString("Percentages are based on patterns observed in Pride and Prejudice.", leftMargin, y);
     } else {
-      g2.drawString("Begin a word to view likely next letters and likely next words.", 40, 310);
+      g2.drawString("Begin a word to view likely next letters and likely next words.", leftMargin, infoY);
       g2.setColor(SOFT_INK);
-      g2.drawString("Tip: Space commits a word. TAB autocompletes. Backspace edits.", 40, 360);
+      g2.drawString("Tip: Space commits a word. TAB autocompletes. Backspace edits.", leftMargin, infoY + infoLineGap);
     }
   }
 
   public void keyPressed(KeyEvent e) {
     int keyCode = e.getKeyCode();
     if (keyCode == KeyEvent.VK_SPACE) {
-      if (trie.contains(word))
-        wordList.add(new TypedWord(word, VALID));
-      else
-        wordList.add(new TypedWord(word, INVALID));
+      if (!word.isEmpty()) {
+        if (trie.contains(word))
+          wordList.add(new TypedWord(word, VALID));
+        else
+          wordList.add(new TypedWord(word, INVALID));
+      }
       word = "";
     }
     if (keyCode == KeyEvent.VK_BACK_SPACE) {
